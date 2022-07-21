@@ -1,0 +1,49 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: secret-m-poc
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: secret-m-poc
+  template:
+    metadata:
+      name: front
+      labels:
+        app: secret-m-poc
+    spec:
+      containers:
+      - name: secret-m-poc
+        image: asia.gcr.io
+        imagePullPolicy: Always
+        ports:
+        - name: front
+          containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+      imagePullSecrets:
+      - name: gcr-secret
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: secret-m-poc
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app: secret-m-poc
